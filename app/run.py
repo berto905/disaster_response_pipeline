@@ -1,6 +1,7 @@
 import json
 import plotly
 import pandas as pd
+import numpy as np
 
 from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import word_tokenize
@@ -26,11 +27,11 @@ def tokenize(text):
     return clean_tokens
 
 # load data
-engine = create_engine('sqlite:///../data/YourDatabaseName.db')
-df = pd.read_sql_table('YourTableName', engine)
+engine = create_engine('sqlite:///../data/DisasterDatabase.db')
+df = pd.read_sql_table('messages', engine)
 
 # load model
-model = joblib.load("../models/your_model_name.pkl")
+model = joblib.load("../models/classifier.pkl")
 
 
 # index webpage displays cool visuals and receives user input text for model
@@ -40,10 +41,21 @@ def index():
     
     # extract data needed for visuals
     # TODO: Below is an example - modify to extract data for your own visuals
+    
+    # create data for genre distribution
     genre_counts = df.groupby('genre').count()['message']
     genre_names = list(genre_counts.index)
     
+    # create data for categories distribution
+    categories = df.iloc[:, 4:].columns
+    category_counts = (df.iloc[:, 4:] != 0).sum().values
+    
+    # create data for messages length distribution
+    length = df.message.str.split().str.len()
+    length_counts, length_div = np.histogram(length, range=(0, length.quantile(0.99)))
+    
     # create visuals
+        
     # TODO: Below is an example - modify to create your own visuals
     graphs = [
         {
@@ -63,7 +75,45 @@ def index():
                     'title': "Genre"
                 }
             }
+        },
+
+        {
+               'data': [
+                Bar(
+                    x=categories,
+                    y=category_counts
+                )
+            ],
+
+            'layout': {
+                'title': 'Distribution of Message Categories',
+                'yaxis': {
+                    'title': "Count"
+                },
+                'xaxis': {
+                    'title': "Category"
+                }
+            }
+        },
+        {
+            'data': [
+                Bar(
+                    x=length_div,
+                    y=length_counts
+                )
+            ],
+
+            'layout': {
+                'title': 'Distribution of Message Length',
+                'yaxis': {
+                    'title': "Count"
+                },
+                'xaxis': {
+                    'title': "Length"
+                }
+            }
         }
+
     ]
     
     # encode plotly graphs in JSON
