@@ -25,7 +25,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 from sklearn.multioutput import MultiOutputClassifier
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import classification_report
+from sklearn.metrics import precision_recall_fscore_support as score
 
 import pickle
 
@@ -115,14 +115,19 @@ def evaluate_model(model, X_test, Y_test, category_names):
     Args:
         model: trained classifier
         X_test: test features
-        y_test: test labels
+        Y_test: test labels
         category_names: array of category names
+    Output:
+        F1 score, precision, recall for each category
     '''
     y_pred = model.predict(X_test)
 
-    for i in range(len(category_names)):
-        print('Label:', category_names[i])
-        print(classification_report(Y_test[:, i], y_pred[:, i]))
+    for i, category in enumerate(category_names):
+        precision, recall, fscore, _ = score(Y_test[:,i], y_pred[:,i], average='micro')
+        print('Category:', category)
+        print('F1 score: {:.2%}, precision: {:.2%},  recall: {:.2%}'.format(fscore, precision, recall))
+        print('----------------------------------------------------')
+
 
 def save_model(model, model_filepath):
     '''Export the model as a pickle file
